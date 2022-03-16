@@ -34,7 +34,9 @@ const dataSchema = new mongoose.Schema(
   "referencedTags":[String],
   "set":String,
   "text":String,
-  "type":String});
+  "type":String,
+  "rating": Number,
+  "people_rated": Number});
   
 const dataModel = mongoose.model('card', dataSchema,'cards.collectible');
 
@@ -86,6 +88,7 @@ app.get('/', (req, res) => {
   // res.send({
   //   Data:"there is nothign to see here again"
   // });
+  
   const temp = random_search().then(
     response => {
       // console.log(response);
@@ -117,7 +120,29 @@ app.get('/search/:id', function(req, res) {
   )
 });
 
+app.get('/:id/:rating', function(req, res) {
+  var new_rating = "nothing";
+  var temp = search_by_id(req.params.id).then(response => {
+
+    var new_rating = (response[0].rating * response[0].people_rated + Number(req.params.rating)) / (response[0].people_rated + 1);
+    console.log(new_rating);
+    dataModel.collection.updateOne( {"id" : req.params.id },
+    { $set: { "rating" : new_rating }});
+    dataModel.collection.updateOne( {"id" : req.params.id },
+    { $inc: {"people_rated":  1} });
+    res.send({Data:temp,number:new_rating});
+  })
+
+
+  // 
+  // var response = search_by_id(req.params.id);
+  // console.log(response);
+  // response = {"status":500};
   
+
+    
+  
+});
 
 
 app.listen(port, () => {
