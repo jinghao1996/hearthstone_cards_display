@@ -6,31 +6,45 @@ import Rating from "@mui/material/Rating";
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
+import {db} from "./util/firebase"; 
+
+import { set, ref, onValue, remove, update,query,equalTo } from "firebase/database";
 
 const CardPage = () => {
     const {id} = useParams();
     const [CardInfo, setCardInfo] = useState({});
-    const [currentRating, setRating] = useState(0);
     
     useEffect(() =>{
-        axios.get("http:///localhost:8081/card/" + id).then((res)=>{
-            const data = res.data.Data[0];
-            setCardInfo(data);
+        const cardRef = ref(db,"cards/" + id );
+        onValue(cardRef,snapshot =>{
+            console.log(snapshot.val());
+            setCardInfo (snapshot.val());
+          
+        })
+        // axios.get("http:///localhost:8081/card/" + id).then((res)=>{
+        //     const data = res.data.Data[0];
+        //     setCardInfo(data);
             
-        });
+        // });
     },[]);
 
-    console.log(CardInfo);
+    // console.log(CardInfo);
     var url = "https://art.hearthstonejson.com/v1/render/latest/enUS/256x/" +id +".png";
-    let {id: ID, name, cardClass, cost, rarity,text,rating} = CardInfo || {};
-    console.log(CardInfo);
-    rating = Math.ceil(rating);
+    let {id: ID, name, cardClass, cost, rarity,text,rating:currentRating,people_rated} = CardInfo || {};
+    
+    currentRating = Math.ceil(currentRating);
+    const oldRating = currentRating;
 
     const changeRating = (point) => {
-        axios.get("http:///localhost:8081/"+id + "/" + point).then((res) =>
-        {
-            console.log(res);
-        })
+        // axios.get("http:///localhost:8081/"+id + "/" + point).then((res) =>
+        // {
+        //     console.log(res);
+        // })
+        var new_rating = (oldRating * people_rated + point) / (people_rated + 1);
+        update(ref(db, `/cards/`+id), {
+            rating: new_rating,
+            people_rated: people_rated + 1
+          });
     }
 
 
@@ -61,17 +75,15 @@ const CardPage = () => {
                             <br/>
                             <h4> rarity: {rarity} </h4>
                             <br/>
-                            <h5> rating: {rating}</h5>
-                            <br/>
                             <h6> text: {text} </h6>
                             <Typography component="legend" gutterBottom variant="h5"  >Would you recommend this card? </Typography>
                                 <Rating
                                     name="simple-controlled"
-                                    value={rating}
+                                    value={currentRating}
                                     onChange={(event, newValue) => {
                                         console.log("rating is ", newValue);
                                         changeRating(newValue);
-                                        rating = newValue;
+                                        currentRating = newValue;
                                     }}
                                 />
                         </Grid>

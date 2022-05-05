@@ -20,7 +20,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 // import Container from '@mui/material/Container';
 
-const cards = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+
 
 export default function App() {
   return (
